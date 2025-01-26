@@ -25,6 +25,9 @@ const Product = require('./models/Product');
 const Login = require('./routes/Login');
 const Quotation = require('./routes/Quotation');
 const PriceList = require('./routes/PriceList');
+const Order = require('./routes/Order');
+const Customer = require('./routes/Customer');
+const Sales = require('./routes/SalesExecutive');
 
 // ------------------------------------------------------------------------------------------------------- //
 
@@ -33,6 +36,9 @@ const PriceList = require('./routes/PriceList');
 app.use('/api', Login);
 app.use('/api', Quotation);
 app.use('/api', PriceList);
+app.use('/api', Customer);
+app.use('/api', Sales);
+app.use('/api', Order);
 
 // ------------------------------------------------------------------------------------------------------- //
 
