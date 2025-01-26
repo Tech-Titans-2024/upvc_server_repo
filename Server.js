@@ -7,7 +7,7 @@ const app = express();
 
 require('dotenv').config();
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_URL, methods: ['GET', 'POST', 'PUT', 'DELETE'], credentials: true,}))
+app.use(cors({ origin: process.env.FRONTEND_URL, methods: ['GET', 'POST', 'PUT', 'DELETE'], credentials: true, }))
 app.use(express.json({ limit: '10mb' }));
 
 // ------------------------------------------------------------------------------------------------------- //
@@ -24,13 +24,15 @@ const Product = require('./models/Product');
 
 const Login = require('./routes/Login');
 const Quotation = require('./routes/Quotation');
+const PriceList = require('./routes/PriceList');
 
 // ------------------------------------------------------------------------------------------------------- //
- 
+
 // Route Usage
 
 app.use('/api', Login);
 app.use('/api', Quotation);
+app.use('/api', PriceList);
 
 // ------------------------------------------------------------------------------------------------------- //
 

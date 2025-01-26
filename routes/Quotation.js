@@ -1,5 +1,6 @@
 const express = require('express');
 const route = express.Router();
+const User = require('../models/User');
 const Product = require('../models/Product');
 
 // ------------------------------------------------------------------------------------------------------- //
@@ -40,8 +41,7 @@ route.post('/variantTypes', async (req, res) => {
 
     const { selected_type, selected_category } = req.body;
 
-    try 
-    {
+    try {
         let uniqueProductVariants = [];
         if (selected_category === 'Door') {
             const varientTypes = await Product.find({ type: selected_type }, 'variant');
@@ -73,6 +73,51 @@ route.get('/louverVariants', async (req, res) => {
     catch (error) {
         console.error("Error fetching Louver Types : ", error);
         res.status(500).json({ message: 'Internal Server Error' });
+    }
+})
+
+// ------------------------------------------------------------------------------------------------------- //
+
+// To fetch Price and Image
+
+route.post('/pricelist', async (req, res) => {
+
+    const { height, width, selectedProduct, selectedType, selectedVariant, brand } = req.body;
+
+    try {
+
+        const category_data = await Product.findOne({
+            variant: selectedVariant, width: width, height: height,
+            brand: brand, product: selectedProduct, type: selectedType
+        })
+
+        if (category_data) { const { price, image } = category_data; res.json({ data: price, image }) }
+        else {
+            const defaultPrice = 399;
+            const defaultImage = '';
+            res.json({ data: defaultPrice, image: defaultImage });
+        }
+    }
+    catch (error) {
+        console.error('Error fetching Price List:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+})
+
+// ------------------------------------------------------------------------------------------------------- //
+
+// To Fetch Sales Man Details
+
+route.get('/salesManDetails', async (req, res) => {
+
+    try {
+        const salesPerData = await User.find({});
+        if (salesPerData && salesPerData.length > 0) { res.json(salesPerData) } 
+        else { res.json({ "Message": "Not Found" })}
+    } 
+    catch (err) {
+        console.error(err);
+        res.status(500).json({ "Message": "An error occurred", "Error": err.message });
     }
 })
 
