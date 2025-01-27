@@ -83,6 +83,7 @@ route.get('/louverVariants', async (req, res) => {
 route.post('/pricelist', async (req, res) => {
 
     const { height, width, selectedProduct, selectedType, selectedVariant, brand } = req.body;
+    console.log(height, width, selectedProduct, selectedType, selectedVariant, brand)
 
     try {
 
@@ -91,12 +92,13 @@ route.post('/pricelist', async (req, res) => {
             brand: brand, product: selectedProduct, type: selectedType
         })
 
-        if (category_data) { const { price, image } = category_data; res.json({ data: price, image }) }
+        if (category_data) { const { price, image } = category_data; res.json({ data: price, image: image  }) }
         else {
             const defaultPrice = 399;
             const defaultImage = '';
             res.json({ data: defaultPrice, image: defaultImage });
         }
+        console.log(category_data)
     }
     catch (error) {
         console.error('Error fetching Price List:', error);
