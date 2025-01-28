@@ -2,6 +2,7 @@ const express = require('express');
 const route = express.Router();
 const User = require('../models/User');
 const Product = require('../models/Product');
+const Quotation = require('../models/Quotation');
 
 // ------------------------------------------------------------------------------------------------------- //
 
@@ -83,22 +84,14 @@ route.get('/louverVariants', async (req, res) => {
 route.post('/pricelist', async (req, res) => {
 
     const { height, width, selectedProduct, selectedType, selectedVariant, brand } = req.body;
-    console.log(height, width, selectedProduct, selectedType, selectedVariant, brand)
 
     try {
-
         const category_data = await Product.findOne({
             variant: selectedVariant, width: width, height: height,
             brand: brand, product: selectedProduct, type: selectedType
         })
-
-        if (category_data) { const { price, image } = category_data; res.json({ data: price, image: image  }) }
-        else {
-            const defaultPrice = 399;
-            const defaultImage = '';
-            res.json({ data: defaultPrice, image: defaultImage });
-        }
-        console.log(category_data)
+        if (category_data) { const { price, image } = category_data; res.json({ data: price, image: image }) }
+        else { const defaultPrice = 399; const defaultImage = ''; res.json({ data: defaultPrice, image: defaultImage }) }
     }
     catch (error) {
         console.error('Error fetching Price List:', error);
@@ -114,12 +107,48 @@ route.get('/salesManDetails', async (req, res) => {
 
     try {
         const salesPerData = await User.find({});
-        if (salesPerData && salesPerData.length > 0) { res.json(salesPerData) } 
-        else { res.json({ "Message": "Not Found" })}
-    } 
+        if (salesPerData && salesPerData.length > 0) { res.json(salesPerData) }
+        else { res.json({ "Message": "Not Found" }) }
+    }
     catch (err) {
         console.error(err);
         res.status(500).json({ "Message": "An error occurred", "Error": err.message });
+    }
+})
+
+// ------------------------------------------------------------------------------------------------------- //
+
+// To Save Quotation
+
+route.post('/quotationSave', async (req, res) => {
+
+    const { data } = req.body;
+
+    try {
+
+        const { customer, savedData } = data 
+        const newQuotation = new Quotation({
+            quotation_no: customer.quotationNo, sales_person: customer.salesPerson,
+            cus_name: customer.cusName, cus_address: customer.cusAdddress,
+            cus_contact: customer.cusContact, cus_state: customer.cusState, date: customer.date, 
+            netTotal: customer.netTotal, cgst: customer.cgst, sgst: customer.sgst, 
+            igst: customer.igst, tp_cost: customer.tpcost, gTotal: customer.gTotal,
+            product: savedData.map(item => ({
+                brand: item.brand, product: item.product, type: item.type,
+                variant: item.variant, mesh: item.mesh, frame: item.frame,
+                lock: item.lock, width: item.width, height: item.height,
+                feet: item.feet, area: item.area, price: item.price,
+                quantity: item.quantity, totalqtyprice: item.totalqtyprice,
+                glass: item.glass, thickness: item.thickness, color: item.color,
+                adcost: item.adcost, totalcost: item.totalcost, image: item.image
+            }))
+        })
+        await newQuotation.save();
+        res.status(200).json({ message: "Quotation saved successfully", quotation: newQuotation })
+    }
+    catch (error) {
+        console.error("Error saving quotation:", error);
+        res.status(500).json({ message: "Internal server error", error });
     }
 })
 

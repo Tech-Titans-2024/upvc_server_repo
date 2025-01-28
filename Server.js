@@ -27,6 +27,7 @@ const PriceList = require('./routes/PriceList');
 const Order = require('./routes/Order');
 const Customer = require('./routes/Customer');
 const Sales = require('./routes/SalesExecutive');
+const Manage = require('./routes/Manage');
 
 // ------------------------------------------------------------------------------------------------------- //
 
@@ -38,6 +39,7 @@ app.use('/api', PriceList);
 app.use('/api', Customer);
 app.use('/api', Sales);
 app.use('/api', Order);
+app.use('/api', Manage);
 
 // ------------------------------------------------------------------------------------------------------- //
 
