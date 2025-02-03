@@ -41,7 +41,7 @@ app.use('/api', Customer);
 app.use('/api', Sales);
 app.use('/api', Order);
 app.use('/api', Manage);
-app.use('/uploads', express.static(path.join(__dirname, '/product_images')));
+app.use('/product_images', express.static(path.join(__dirname, '/product_images')));
 // ------------------------------------------------------------------------------------------------------- //
 
 // Db Connection Check
