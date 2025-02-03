@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const app = express();
+const path = require('path');
 
 // ------------------------------------------------------------------------------------------------------- //
 
@@ -40,7 +41,7 @@ app.use('/api', Customer);
 app.use('/api', Sales);
 app.use('/api', Order);
 app.use('/api', Manage);
-
+app.use('/uploads', express.static(path.join(__dirname, '/product_images')));
 // ------------------------------------------------------------------------------------------------------- //
 
 // Db Connection Check
