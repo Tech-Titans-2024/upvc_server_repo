@@ -29,6 +29,8 @@ const Order = require('./routes/Order');
 const Customer = require('./routes/Customer');
 const Sales = require('./routes/SalesExecutive');
 const Manage = require('./routes/Manage');
+const Dashboard = require('./routes/Dashboard');
+const Report = require('./routes/Report');
 
 // ------------------------------------------------------------------------------------------------------- //
 
@@ -41,7 +43,10 @@ app.use('/api', Customer);
 app.use('/api', Sales);
 app.use('/api', Order);
 app.use('/api', Manage);
+app.use('/api', Dashboard);
+app.use('/api', Report);
 app.use('/product_images', express.static(path.join(__dirname, '/product_images')));
+
 // ------------------------------------------------------------------------------------------------------- //
 
 // Db Connection Check

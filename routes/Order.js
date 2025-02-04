@@ -12,6 +12,7 @@ route.post('/quotationsDetails', async (req, res) => {
     const { selectedStatus } = req.body;
 
     try {
+        
         if(selectedStatus === 'Confirmed') {
             const quotations = await Order.find();
             res.json(quotations);
