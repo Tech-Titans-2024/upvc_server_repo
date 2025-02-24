@@ -154,4 +154,36 @@ route.post('/quotationSave', async (req, res) => {
 
 // ------------------------------------------------------------------------------------------------------- //
 
+
+route.get('/quotationNo', async (req, res) => {
+    try {
+        const result = await Quotation.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    maxQuotationNo: { $max: "$quotation_no" }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    maxQuotationNo: 1
+                }
+            }
+        ]);
+
+        if (result.length > 0) {
+            res.json(result[0].maxQuotationNo);
+            console.log(result);
+            
+        } else {
+            res.json("Q_0");
+        }
+    } catch (err) {
+        console.error("Error fetching max quotation number:", err);
+        res.status(500).send("Internal Server Error");
+    }
+})
+
+
 module.exports = route;
