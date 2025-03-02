@@ -52,3 +52,110 @@ route.post('/orderConfirm', async (req, res) => {
 
 
 module.exports = route;
+
+// API to fetch product-wise report from confirmed orders
+route.get('/product-report', async (req, res) => {
+    try {
+        // Fetch all confirmed orders
+        const confirmedOrders = await Order.find({});
+
+        // Aggregate product-wise data
+        const productReport = {};
+
+        confirmedOrders.forEach((order) => {
+            order.product.forEach((item) => {
+                const productKey = `${item.brand}-${item.product}-${item.type}-${item.variant}-${item.subVariant}`;
+
+                if (!productReport[productKey]) {
+                    productReport[productKey] = {
+                        brand: item.brand,
+                        product: item.product,
+                        type: item.type,
+                        variant: item.variant,
+                        subVariant: item.subVariant,
+                        totalQuantity: 0,
+                        totalSales: 0,
+                    };
+                }
+
+                productReport[productKey].totalQuantity += item.quantity;
+                productReport[productKey].totalSales += item.totalcost;
+            });
+        });
+
+        // Convert the report object to an array
+        const reportArray = Object.keys(productReport).map((key) => ({
+            ...productReport[key],
+        }));
+
+        res.status(200).json(reportArray);
+    } catch (err) {
+        console.error('Error fetching product report:', err);
+        res.status(500).json({ message: 'Error fetching product report', error: err });
+    }
+});
+
+module.exports = route;
+
+// API to fetch sales-wise report from confirmed orders
+route.get('/sales-report', async (req, res) => {
+    try {
+        // Fetch all confirmed orders
+        const confirmedOrders = await Order.find({});
+
+        // Aggregate sales-wise data
+        const salesReport = {};
+
+        confirmedOrders.forEach((order) => {
+            const salesKey = `${order.sales_person}-${order.date}`;
+
+            if (!salesReport[salesKey]) {
+                salesReport[salesKey] = {
+                    sales_person: order.sales_person,
+                    date: order.date,
+                    totalOrders: 0,
+                    totalSales: 0,
+                };
+            }
+
+            salesReport[salesKey].totalOrders += 1;
+            salesReport[salesKey].totalSales += order.gTotal; // Use gTotal (grand total) for sales
+        });
+
+        // Convert the report object to an array
+        const reportArray = Object.keys(salesReport).map((key) => ({
+            ...salesReport[key],
+        }));
+
+        res.status(200).json(reportArray);
+    } catch (err) {
+        console.error('Error fetching sales report:', err);
+        res.status(500).json({ message: 'Error fetching sales report', error: err });
+    }
+});
+
+module.exports = route;
+
+// API to fetch confirmed orders
+route.get('/confirmed-orders', async (req, res) => {
+    try {
+        // Fetch all confirmed orders
+        const confirmedOrders = await Order.find({ status: 'confirmed' });
+
+        // Format the orders for the report
+        const formattedOrders = confirmedOrders.map(order => ({
+            orderId: order._id,
+            date: order.date, // Ensure this is in YYYY-MM-DD format
+            customerName: order.cus_name,
+            totalQuantity: order.product.reduce((sum, item) => sum + item.quantity, 0),
+            totalSales: order.product.reduce((sum, item) => sum + item.totalcost, 0),
+        }));
+
+        res.status(200).json(formattedOrders);
+    } catch (err) {
+        console.error('Error fetching confirmed orders:', err);
+        res.status(500).json({ message: 'Error fetching confirmed orders', error: err });
+    }
+});
+
+module.exports = route;
