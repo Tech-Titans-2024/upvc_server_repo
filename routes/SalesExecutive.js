@@ -54,17 +54,17 @@ route.post("/salespersons", async (req, res) => {
 
 
 
-route.delete('/salespersons/:id', async (req, res) => {
-    const { id } = req.params;
-
+route.delete('/salespersons/:DeleteId', async (req, res) => {
+    const { DeleteId } = req.params;
+    
     try {
-        const result = await User.findByIdAndDelete(id); // Assuming you're using Mongoose
+        const result = await User.findByIdAndDelete(DeleteId); // Assuming you're using Mongoose
         if (!result) {
             return res.status(404).json({ error: "Salesperson not found." });
         }
         res.status(200).json({ message: "Salesperson deleted successfully." });
     } catch (err) {
-        console.error(err);
+        console.error("ERROR ",err);
         res.status(500).json({ error: "Failed to delete salesperson." });
     }
 });
