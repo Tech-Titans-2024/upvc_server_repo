@@ -197,10 +197,13 @@ route.post('/editsaveqtn', async (req, res) => {
 
 route.post('/deleteQuotation', async (req,res)=>{
     const {deleteId}=req.body;
+    console.log("ID",deleteId)
     try{
         const deleteQuotation=await Quotation.findOneAndDelete({quotation_no:deleteId})
         if(deleteQuotation){
             res.status(200).json({message:"Quotation successfully"})
+            console.log("SUCCES");
+            
         }
         else{
             res.status(404).json({message: "Quotation not found or invalid"});
