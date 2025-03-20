@@ -83,19 +83,27 @@ route.get('/louverVariants', async (req, res) => {
 
 route.post('/pricelist', async (req, res) => {
 
-    const {height, width, selectedProduct, selectedType, selectedVariant, brand} = req.body;
+    const { height, width, selectedProduct, selectedType, selectedVariant, brand } = req.body;
 
     try {
         const category_data = await Product.findOne({
             variant: selectedVariant, width: width, height: height,
             brand: brand, product: selectedProduct, type: selectedType
         })
-        if (category_data) {const {price, image} = category_data; res.json({data: price, image: image})}
-        else {const defaultPrice = 399; const defaultImage = ''; res.json({data: defaultPrice, image: defaultImage})}
+        const image_data = await Product.findOne({ variant: selectedVariant })
+        if (category_data && image_data) { 
+            const { price } = category_data; 
+            const { image } = image_data; 
+            res.json({ data: price, image: image }) 
+        }
+        else { 
+            const defaultPrice = 399; 
+            const { image } = image_data;  
+            res.json({ data: defaultPrice, image: image }) }
     }
     catch (error) {
         console.error('Error fetching Price List:', error);
-        res.status(500).json({error: 'Internal Server Error'});
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 })
 
