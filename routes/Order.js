@@ -195,24 +195,23 @@ route.post('/editsaveqtn', async (req, res) => {
 //----------------------------------
 
 
-route.post('/deleteQuotation', async (req,res)=>{
-    const {deleteId}=req.body;
-    console.log("ID",deleteId)
-    try{
-        const deleteQuotation=await Quotation.findOneAndDelete({quotation_no:deleteId})
-        if(deleteQuotation){
-            res.status(200).json({message:"Quotation successfully"})
-            console.log("SUCCES");
-            
+route.post('/deleteQuotation', async (req, res) => {
+    const { deleteId } = req.body;
+
+    try {
+        const deleteQuotation = await Quotation.findOneAndDelete({ quotation_no: deleteId });
+        if (deleteQuotation) {
+            res.status(200).json({ message: "Quotation successfully deleted" });
+        } else {
+            res.status(404).json({ message: "Quotation not found or invalid" });
         }
-        else{
-            res.status(404).json({message: "Quotation not found or invalid"});
-        }
-        
-    }
-    catch (err) {
+    } catch (err) {
         console.error("Error:", err);
-        res.status(500).json({message: "An error occurred while delete the Quotation."});
+        res.status(500).json({ message: "An error occurred while deleting the quotation." });
     }
-})
+});
+
+
+
+
 module.exports = route;
