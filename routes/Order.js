@@ -162,34 +162,43 @@ route.get('/confirmed-orders', async (req, res) => {
 
 
 route.post('/editsaveqtn', async (req, res) => {
-    // const {formData, quotationNo, position} = req.body;
-    try {
-        const {position, formData,quotationNo} = req.body; 
+    const { position, formData, quotationNo } = req.body;
 
-        const updatedQuotation = await Quotation.findOneAndUpdate(
-            {
-                quotation_no: quotationNo
-            },
-            {
-                $set: {[`product.${position}`]: formData}
-            },
-            {new: true} // Returns the updated document
+    try {
+        // Step 1: Find the quotation and update the product
+        const quotation = await Quotation.findOne({ quotation_no: quotationNo });
+
+        if (!quotation) {
+            return res.status(404).json({ message: "Quotation not found." });
+        }
+
+        // Step 2: Update the product data
+        quotation.product[position] = formData;
+        await quotation.save();  // Ensures MongoDB commits changes
+
+        // Step 3: Refetch updated data for accurate calculation
+        const updatedQuotation = await Quotation.findOne({ quotation_no: quotationNo });
+
+        // Step 4: Calculate total excluding GST and transport cost
+        const totalProductCost = updatedQuotation.product.reduce(
+            (acc, item) => acc + (item.totalcost || 0), 0
         );
 
-        if (updatedQuotation) {
-            // console.log("Updated Product:", updatedQuotation.product[position]);
-            res.json({message: "Product updated successfully", updatedProduct: updatedQuotation.product[position]});
-        } else {
-            // console.log("Quotation not found or position is invalid.");
-            res.status(404).json({message: "Quotation not found or invalid position."});
-        }
+        // Step 5: Save the calculated total (no GST, no transport cost)
+        updatedQuotation.netTotal = totalProductCost;
+        await updatedQuotation.save();
+
+        res.json({
+            message: "Product updated successfully",
+            updatedProduct: updatedQuotation.product[position],
+            calculatedTotal: totalProductCost
+        });
     } catch (err) {
         console.error("Error:", err);
-        res.status(500).json({message: "An error occurred while updating the product."});
+        res.status(500).json({ message: "An error occurred while updating the product." });
     }
+});
 
-
-})
 
 
 //----------------------------------
@@ -208,6 +217,30 @@ route.post('/deleteQuotation', async (req, res) => {
     } catch (err) {
         console.error("Error:", err);
         res.status(500).json({ message: "An error occurred while deleting the quotation." });
+    }
+});
+
+
+
+
+route.post('/getqoutationcost', async (req, res) => {
+    const { quotationNo } = req.body;
+
+    if (!quotationNo) {
+        return res.status(400).json({ error: "Quotation number is required" });
+    }
+
+    try {
+        const getcost = await Quotation.findOne({ quotation_no: quotationNo });
+
+        if (!getcost) {
+            return res.status(404).json({ error: "Quotation not found" });
+        }
+
+        res.status(200).json(getcost);
+    } catch (e) {
+        console.error("Error fetching cost:", e);
+        res.status(500).json({ error: "Internal server error" });
     }
 });
 
