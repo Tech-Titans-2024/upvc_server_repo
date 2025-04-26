@@ -35,6 +35,7 @@ const orderSchema = new mongoose.Schema(
                 thickness: { type: String },
                 color: { type: String },
                 adcost: { type: Number },
+                floor: { type: String, default: '' },
                 totalcost: { type: Number },
                 image: { type: String }
             }

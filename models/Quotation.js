@@ -33,6 +33,7 @@ const quotationSchema = new mongoose.Schema(
                 totalqtyprice: { type: Number },
                 glass: { type: String },
                 thickness: { type: String },
+                floor: { type: String, default: '' },
                 color: { type: String },
                 adcost: { type: Number },
                 totalcost: { type: Number },
