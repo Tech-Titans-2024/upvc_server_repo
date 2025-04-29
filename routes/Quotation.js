@@ -126,39 +126,65 @@ route.get('/salesManDetails', async (req, res) => {
 
 // ------------------------------------------------------------------------------------------------------- //
 
-// To Save Quotation
-
 route.post('/quotationSave', async (req, res) => {
-
-    const {data} = req.body;
+    const { data } = req.body;
 
     try {
+        const { customer, savedData } = data;
 
-        const {customer, savedData} = data
+        savedData.forEach(item => {
+            console.log('Item floor value:', item.floor);  // Log the floor value before processing
+        });
+
         const newQuotation = new Quotation({
-            quotation_no: customer.quotationNo, sales_person: customer.salesPerson,
-            cus_name: customer.cusName, cus_address: customer.cusAddress,
-            cus_contact: customer.cusContact, cus_state: customer.cusState, date: customer.date,
-            netTotal: customer.netTotal, cgst: customer.cgst, sgst: customer.sgst,
-            igst: customer.igst, tp_cost: customer.tpcost, gTotal: customer.gTotal,
+            quotation_no: customer.quotationNo,
+            sales_person: customer.salesPerson,
+            cus_name: customer.cusName,
+            cus_address: customer.cusAddress,
+            cus_contact: customer.cusContact,
+            cus_state: customer.cusState,
+            date: customer.date,
+            netTotal: customer.netTotal,
+            cgst: customer.cgst,
+            sgst: customer.sgst,
+            igst: customer.igst,
+            tp_cost: customer.tpcost,
+            gTotal: customer.gTotal,
             product: savedData.map(item => ({
-                brand: item.brand, product: item.product, type: item.type,
-                variant: item.variant, mesh: item.mesh, frame: item.frame,
-                lock: item.lock, width: item.width, height: item.height,
-                feet: item.feet, area: item.area, price: item.price,
-                quantity: item.quantity, totalqtyprice: item.totalqtyprice,
-                glass: item.glass, thickness: item.thickness, color: item.color,
-                adcost: item.adcost, totalcost: item.totalcost, image: item.image
+                brand: item.brand,
+                product: item.product,
+                type: item.type,
+                variant: item.variant,
+                mesh: item.mesh,
+                frame: item.frame,
+                lock: item.lock,
+                width: item.width,
+                height: item.height,
+                feet: item.feet,
+                area: item.area,
+                price: item.price,
+                quantity: item.quantity,
+                totalqtyprice: item.totalqtyprice,
+                glass: item.glass,
+                thickness: item.thickness,
+                color: item.color,
+                adcost: item.adcost,
+                totalcost: item.totalcost,
+                image: item.image,
+                floor: (item.floor === '' || item.floor === undefined || item.floor === null) 
+                    ? null 
+                    : Number(item.floor)  // Ensure it's a number
             }))
-        })
+        });
+
         await newQuotation.save();
-        res.status(200).json({message: "Quotation saved successfully", quotation: newQuotation})
+        res.status(200).json({ message: "Quotation saved successfully", quotation: newQuotation });
     }
     catch (error) {
         console.error("Error saving quotation:", error);
-        res.status(500).json({message: "Internal server error", error});
+        res.status(500).json({ message: "Internal server error", error });
     }
-})
+});
 
 // ------------------------------------------------------------------------------------------------------- //
 
