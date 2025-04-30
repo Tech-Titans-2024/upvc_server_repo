@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const quotationSchema = new mongoose.Schema(
     {
-        quotation_no: { type: String, required: true },
+        quotation_no: { type: Number, required: true },
         sales_person: { type: String },
         cus_name: { type: String },
         cus_address: { type: String },

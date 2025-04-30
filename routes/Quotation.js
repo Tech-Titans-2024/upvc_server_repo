@@ -83,27 +83,28 @@ route.get('/louverVariants', async (req, res) => {
 
 route.post('/pricelist', async (req, res) => {
 
-    const { height, width, selectedProduct, selectedType, selectedVariant, brand } = req.body;
+    const {height, width, selectedProduct, selectedType, selectedVariant, brand} = req.body;
 
     try {
         const category_data = await Product.findOne({
             variant: selectedVariant, width: width, height: height,
             brand: brand, product: selectedProduct, type: selectedType
         })
-        const image_data = await Product.findOne({ variant: selectedVariant })
-        if (category_data && image_data) { 
-            const { price } = category_data; 
-            const { image } = image_data; 
-            res.json({ data: price, image: image }) 
+        const image_data = await Product.findOne({variant: selectedVariant})
+        if (category_data && image_data) {
+            const {price} = category_data;
+            const {image} = image_data;
+            res.json({data: price, image: image})
         }
-        else { 
-            const defaultPrice = 399; 
-            const { image } = image_data;  
-            res.json({ data: defaultPrice, image: image }) }
+        else {
+            const defaultPrice = 399;
+            const {image} = image_data;
+            res.json({data: defaultPrice, image: image})
+        }
     }
     catch (error) {
         console.error('Error fetching Price List:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(500).json({error: 'Internal Server Error'});
     }
 })
 
@@ -127,13 +128,13 @@ route.get('/salesManDetails', async (req, res) => {
 // ------------------------------------------------------------------------------------------------------- //
 
 route.post('/quotationSave', async (req, res) => {
-    const { data } = req.body;
+    const {data} = req.body;
 
     try {
-        const { customer, savedData } = data;
+        const {customer, savedData} = data;
 
         savedData.forEach(item => {
-            console.log('Item floor value:', item.floor);  // Log the floor value before processing
+            // console.log('Item floor value:', item.floor);  // Log the floor value before processing
         });
 
         const newQuotation = new Quotation({
@@ -171,18 +172,18 @@ route.post('/quotationSave', async (req, res) => {
                 adcost: item.adcost,
                 totalcost: item.totalcost,
                 image: item.image,
-                floor: (item.floor === '' || item.floor === undefined || item.floor === null) 
-                    ? null 
+                floor: (item.floor === '' || item.floor === undefined || item.floor === null)
+                    ? null
                     : Number(item.floor)  // Ensure it's a number
             }))
         });
 
         await newQuotation.save();
-        res.status(200).json({ message: "Quotation saved successfully", quotation: newQuotation });
+        res.status(200).json({message: "Quotation saved successfully", quotation: newQuotation});
     }
     catch (error) {
         console.error("Error saving quotation:", error);
-        res.status(500).json({ message: "Internal server error", error });
+        res.status(500).json({message: "Internal server error", error});
     }
 });
 
@@ -191,20 +192,21 @@ route.post('/quotationSave', async (req, res) => {
 // Quotation No
 
 route.get('/quotationNo', async (req, res) => {
-
     try {
-
         const result = await Quotation.aggregate([
-            {$group: {_id: null, maxQuotationNo: {$max: "$quotation_no"}}},
-            {$project: {_id: 0, maxQuotationNo: 1}}
-        ])
-        if (result.length > 0) {res.json(result[0].maxQuotationNo)}
-        else {res.json("Q_0")}
-    }
-    catch (err) {
+            { $group: { _id: null, maxQuotationNo: { $max: "$quotation_no" } } },
+            { $project: { _id: 0, maxQuotationNo: 1 } }
+        ]);
+
+        const maxQuotationNo = result.length > 0 ? result[0].maxQuotationNo : 0;
+        res.json(maxQuotationNo);
+
+        
+    } catch (err) {
         console.error("Error fetching max quotation number:", err);
         res.status(500).send("Internal Server Error");
     }
-})
+});
+
 
 module.exports = route;
