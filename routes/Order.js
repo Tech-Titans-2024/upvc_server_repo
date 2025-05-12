@@ -208,4 +208,43 @@ route.post('/viewQtn', async (req, res) => {
     catch (err) { }
 })
 
+
+
+// delete
+
+route.post('/deleteProduct', async (req, res) => {
+    try {
+        let { quotation_no, index } = req.body;
+
+        // Ensure types
+        quotation_no = Number(quotation_no);
+        index = parseInt(index);
+
+        if (isNaN(quotation_no) || isNaN(index)) {
+            return res.status(400).json({ message: 'Invalid quotation_no or index' });
+        }
+
+        const quotation = await Quotation.findOne({ quotation_no });
+
+        if (!quotation) {
+            return res.status(404).json({ message: 'Quotation not found' });
+        }
+
+        if (index < 0 || index >= quotation.product.length) {
+            return res.status(400).json({ message: 'Invalid product index' });
+        }
+
+        // Remove the product
+        quotation.product.splice(index, 1);
+
+        // Save the updated quotation
+        await quotation.save();
+
+        return res.status(200).json({ message: 'Product deleted successfully', updatedQuotation: quotation });
+    } catch (err) {
+        console.error('Error deleting product:', err);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 module.exports = route;
