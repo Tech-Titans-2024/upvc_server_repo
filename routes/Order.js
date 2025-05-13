@@ -216,7 +216,6 @@ route.post('/deleteProduct', async (req, res) => {
     try {
         let { quotation_no, index } = req.body;
 
-        // Ensure types
         quotation_no = Number(quotation_no);
         index = parseInt(index);
 
@@ -234,13 +233,48 @@ route.post('/deleteProduct', async (req, res) => {
             return res.status(400).json({ message: 'Invalid product index' });
         }
 
-        // Remove the product
+        // Remove the product from the array
         quotation.product.splice(index, 1);
 
-        // Save the updated quotation
+        // Recalculate netTotal
+        const netTotal = quotation.product.reduce(
+            (acc, prod) => acc + (prod.totalcost || 0),
+            0
+        );
+
+        // Default tax values
+        let cgst = 0, sgst = 0, igst = 0;
+
+        // Recalculate taxes based on state
+        if (quotation.cus_state === 'Tamil Nadu') {
+            cgst = parseFloat((netTotal * 9) / 100);
+            sgst = parseFloat((netTotal * 9) / 100);
+        } else {
+            cgst = parseFloat((netTotal * 9) / 100);
+            igst = parseFloat((netTotal * 9) / 100);
+        }
+
+        // If no products, reset tp_cost
+        let tp_cost = quotation.product.length === 0 ? 0 : quotation.tp_cost || 0;
+
+        // Recalculate grand total
+        const gTotal = parseFloat(netTotal + cgst + sgst + igst + tp_cost);
+
+        // Update values in document
+        quotation.netTotal = netTotal;
+        quotation.cgst = cgst;
+        quotation.sgst = sgst;
+        quotation.igst = igst;
+        quotation.tp_cost = tp_cost;
+        quotation.gTotal = gTotal;
+
         await quotation.save();
 
-        return res.status(200).json({ message: 'Product deleted successfully', updatedQuotation: quotation });
+        return res.status(200).json({
+            message: 'Product deleted and totals updated successfully',
+            updatedQuotation: quotation,
+        });
+
     } catch (err) {
         console.error('Error deleting product:', err);
         return res.status(500).json({ message: 'Internal server error' });
