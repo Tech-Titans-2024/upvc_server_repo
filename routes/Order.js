@@ -138,29 +138,65 @@ route.get('/confirmed-orders', async (req, res) => {
 // ------------------------------------------------------------------------------------------------------- //
 
 route.post('/editsaveqtn', async (req, res) => {
-
     const { position, formData, quotationNo } = req.body;
 
     try {
         const quotation = await Quotation.findOne({ quotation_no: quotationNo });
 
-        if (!quotation) { return res.status(404).json({ message: "Quotation not found." }) }
+        if (!quotation) {
+            return res.status(404).json({ message: "Quotation not found." });
+        }
 
+        // Update the product at the given position
         quotation.product[position] = formData;
-        await quotation.save(); 
 
-        const updatedQuotation = await Quotation.findOne({ quotation_no: quotationNo });
-        const totalProductCost = updatedQuotation.product.reduce( (acc, item) => acc + (item.totalcost || 0), 0 )
-        updatedQuotation.netTotal = totalProductCost;
+        // Recalculate netTotal from all products
+        const netTotal = quotation.product.reduce(
+            (acc, item) => acc + (parseFloat(item.totalcost) || 0),
+            0
+        );
 
-        await updatedQuotation.save();
-        res.json({ message: "Product updated successfully", updatedProduct: updatedQuotation.product[position], calculatedTotal: totalProductCost })
-    } 
-    catch (err) {
+        // Initialize tax values
+        let cgst = 0, sgst = 0, igst = 0;
+
+        // Tax calculation based on state
+        if (quotation.cus_state === 'Tamil Nadu') {
+            // Intra-state: CGST + SGST
+            cgst = parseFloat((netTotal * 9 / 100).toFixed(2));
+            sgst = parseFloat((netTotal * 9 / 100).toFixed(2));
+            igst = 0;
+        } else {
+            // Other states: Custom logic - CGST + IGST
+            cgst = parseFloat((netTotal * 9 / 100).toFixed(2));
+            igst = parseFloat((netTotal * 9 / 100).toFixed(2));
+            sgst = 0;
+        }
+
+        const tp_cost = parseFloat(quotation.tp_cost || 0);
+        const gTotal = parseFloat((netTotal + cgst + sgst + igst + tp_cost).toFixed(2));
+
+        // Save updated totals
+        quotation.netTotal = netTotal;
+        quotation.cgst = cgst;
+        quotation.sgst = sgst;
+        quotation.igst = igst;
+        quotation.gTotal = gTotal;
+
+        await quotation.save();
+
+        return res.json({
+            message: "Product updated and quotation totals recalculated successfully",
+            updatedProduct: quotation.product[position],
+            updatedQuotation: quotation
+        });
+
+    } catch (err) {
         console.error("Error:", err);
-        res.status(500).json({ message: "An error occurred while updating the product." });
+        return res.status(500).json({ message: "An error occurred while updating the product." });
     }
-})
+});
+
+
 
 // ------------------------------------------------------------------------------------------------------- //
 
