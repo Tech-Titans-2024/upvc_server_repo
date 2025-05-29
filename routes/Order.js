@@ -235,6 +235,100 @@ route.post('/getqoutationcost', async (req, res) => {
 })
 
 // ------------------------------------------------------------------------------------------------------- //
+route.get('/pie-chart-data', async (req, res) => {
+    try {
+        const confirmedOrders = await Order.find({});
+        const typeReport = {};
+
+        confirmedOrders.forEach((order) => {
+            order.product.forEach((item) => {
+                if (item.product === 'Door') {
+                    const typeKey = item.type || 'Uncategorized';
+                    
+                    if (!typeReport[typeKey]) {
+                        typeReport[typeKey] = {
+                            type: typeKey,
+                            totalQuantity: 0,
+                            totalSales: 0
+                        };
+                    }
+                    
+                    typeReport[typeKey].totalQuantity += item.quantity;
+                    typeReport[typeKey].totalSales += item.totalcost;
+                }
+            });
+        });
+
+        const reportArray = Object.values(typeReport).sort((a, b) => b.totalQuantity - a.totalQuantity);
+        res.status(200).json(reportArray);
+    } catch (err) {
+        console.error('Error fetching pie chart data:', err);
+        res.status(500).json({ message: 'Error fetching pie chart data', error: err });
+    }
+});
+
+route.get('/window-pie-chart-data', async (req, res) => {
+    try {
+        const confirmedOrders = await Order.find({});
+        const typeReport = {};
+
+        confirmedOrders.forEach((order) => {
+            order.product.forEach((item) => {
+                if (item.product === 'Window') {
+                    const typeKey = item.type || 'Uncategorized';
+                    
+                    if (!typeReport[typeKey]) {
+                        typeReport[typeKey] = {
+                            type: typeKey,
+                            totalQuantity: 0,
+                            totalSales: 0
+                        };
+                    }
+                    
+                    typeReport[typeKey].totalQuantity += item.quantity;
+                    typeReport[typeKey].totalSales += item.totalcost;
+                }
+            });
+        });
+
+        // Convert to array and sort by quantity (descending)
+        const result = Object.values(typeReport).sort((a, b) => b.totalQuantity - a.totalQuantity);
+        
+        res.json(result);
+    } catch (error) {
+        console.error("Error fetching window pie chart data:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+route.get('/louver-pie-chart-data', async (req, res) => {
+    try {
+        const confirmedOrders = await Order.find({});
+        const variantReport = {
+            'With Fan': { variant: 'With Fan', totalQuantity: 0, totalSales: 0 },
+            'Without Fan': { variant: 'Without Fan', totalQuantity: 0, totalSales: 0 }
+        };
+
+        confirmedOrders.forEach((order) => {
+            order.product.forEach((item) => {
+                if (item.product === 'Louver') {
+                    const variantKey = item.variant === 'With Fan' ? 'With Fan' : 'Without Fan';
+                    
+                    variantReport[variantKey].totalQuantity += item.quantity;
+                    variantReport[variantKey].totalSales += item.totalcost;
+                }
+            });
+        });
+
+        // Convert to array
+        const result = Object.values(variantReport).filter(item => item.totalQuantity > 0);
+        
+        res.json(result);
+    } catch (error) {
+        console.error("Error fetching louver pie chart data:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
 
 // To View the Details in Order Processing
 
@@ -318,3 +412,4 @@ route.post('/deleteProduct', async (req, res) => {
 });
 
 module.exports = route;
+
