@@ -330,6 +330,68 @@ route.get('/louver-pie-chart-data', async (req, res) => {
     }
 });
 
+route.get('/product-type-sales', async (req, res) => {
+    try {
+        const confirmedOrders = await Order.find({});
+        const productTypeReport = {
+            'Door': { productType: 'Door', totalSales: 0 },
+            'Window': { productType: 'Window', totalSales: 0 },
+            'Louver': { productType: 'Louver', totalSales: 0 }
+        };
+
+        confirmedOrders.forEach((order) => {
+            order.product.forEach((item) => {
+                const productType = item.product;
+                if (productTypeReport[productType]) {
+                    productTypeReport[productType].totalSales += item.totalcost;
+                }
+            });
+        });
+
+        // Convert to array and filter out products with zero sales
+        const result = Object.values(productTypeReport).filter(item => item.totalSales > 0);
+        
+        res.json(result);
+    } catch (error) {
+        console.error("Error fetching product type sales data:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+route.get('/monthly-sales', async (req, res) => {
+  try {
+    const confirmedOrders = await Order.find({});
+    const monthlySales = {};
+
+    // Process each order
+    confirmedOrders.forEach(order => {
+      const orderDate = new Date(order.date);
+      const monthYear = `${orderDate.toLocaleString('default', { month: 'short' })} ${orderDate.getFullYear()}`;
+      
+      if (!monthlySales[monthYear]) {
+        monthlySales[monthYear] = {
+          month: monthYear,
+          totalSales: 0
+        };
+      }
+
+      // Sum the total sales for this order
+      const orderTotal = order.product.reduce((sum, item) => sum + item.totalcost, 0);
+      monthlySales[monthYear].totalSales += orderTotal;
+    });
+
+    // Convert to array and sort by date
+    const result = Object.values(monthlySales).sort((a, b) => {
+      return new Date(a.month) - new Date(b.month);
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error("Error fetching monthly sales:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 // To View the Details in Order Processing
 
 route.post('/viewQtn', async (req, res) => {
