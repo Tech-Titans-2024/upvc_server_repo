@@ -235,72 +235,6 @@ route.post('/getqoutationcost', async (req, res) => {
 })
 
 // ------------------------------------------------------------------------------------------------------- //
-route.get('/pie-chart-data', async (req, res) => {
-    try {
-        const confirmedOrders = await Order.find({});
-        const typeReport = {};
-
-        confirmedOrders.forEach((order) => {
-            order.product.forEach((item) => {
-                if (item.product === 'Door') {
-                    const typeKey = item.type || 'Uncategorized';
-                    
-                    if (!typeReport[typeKey]) {
-                        typeReport[typeKey] = {
-                            type: typeKey,
-                            totalQuantity: 0,
-                            totalSales: 0
-                        };
-                    }
-                    
-                    typeReport[typeKey].totalQuantity += item.quantity;
-                    typeReport[typeKey].totalSales += item.totalcost;
-                }
-            });
-        });
-
-        const reportArray = Object.values(typeReport).sort((a, b) => b.totalQuantity - a.totalQuantity);
-        res.status(200).json(reportArray);
-    } catch (err) {
-        console.error('Error fetching pie chart data:', err);
-        res.status(500).json({ message: 'Error fetching pie chart data', error: err });
-    }
-});
-
-route.get('/window-pie-chart-data', async (req, res) => {
-    try {
-        const confirmedOrders = await Order.find({});
-        const typeReport = {};
-
-        confirmedOrders.forEach((order) => {
-            order.product.forEach((item) => {
-                if (item.product === 'Window') {
-                    const typeKey = item.type || 'Uncategorized';
-                    
-                    if (!typeReport[typeKey]) {
-                        typeReport[typeKey] = {
-                            type: typeKey,
-                            totalQuantity: 0,
-                            totalSales: 0
-                        };
-                    }
-                    
-                    typeReport[typeKey].totalQuantity += item.quantity;
-                    typeReport[typeKey].totalSales += item.totalcost;
-                }
-            });
-        });
-
-        // Convert to array and sort by quantity (descending)
-        const result = Object.values(typeReport).sort((a, b) => b.totalQuantity - a.totalQuantity);
-        
-        res.json(result);
-    } catch (error) {
-        console.error("Error fetching window pie chart data:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-});
-
 route.get('/louver-pie-chart-data', async (req, res) => {
     try {
         const confirmedOrders = await Order.find({});
@@ -330,6 +264,49 @@ route.get('/louver-pie-chart-data', async (req, res) => {
     }
 });
 
+route.get('/sales-by-salesperson', async (req, res) => {
+    try {
+        const confirmedOrders = await Order.find({}); // Get all orders
+        
+        const salesBySalesperson = {};
+
+        confirmedOrders.forEach((order) => {
+            const salesPerson = order.sales_person;
+            const orderTotal = order.netTotal || 0;
+            
+            if (!salesBySalesperson[salesPerson]) {
+                salesBySalesperson[salesPerson] = {
+                    sales_person: salesPerson,
+                    totalSales: 0,
+                    orderCount: 0
+                };
+            }
+            
+            // Add to total sales and count
+            salesBySalesperson[salesPerson].totalSales += orderTotal;
+            salesBySalesperson[salesPerson].orderCount += 1;
+        });
+
+        // Convert to array, sort by sales (descending)
+        const result = Object.values(salesBySalesperson)
+            .filter(item => item.totalSales > 0)
+            .sort((a, b) => b.totalSales - a.totalSales)
+            .map(item => ({
+                sales_person: item.sales_person,
+                totalSales: item.totalSales,
+                orderCount: item.orderCount
+            }));
+
+        res.json(result);
+    } catch (error) {
+        console.error("Error fetching sales by salesperson data:", error);
+        res.status(500).json({ 
+            error: "Internal server error",
+            details: error.message 
+        });
+    }
+});
+
 route.get('/product-type-sales', async (req, res) => {
     try {
         const confirmedOrders = await Order.find({});
@@ -355,6 +332,154 @@ route.get('/product-type-sales', async (req, res) => {
     } catch (error) {
         console.error("Error fetching product type sales data:", error);
         res.status(500).json({ error: "Internal server error" });
+    }
+});
+
+route.get('/door-sales-data', async (req, res) => {
+    try {
+        const confirmedOrders = await Order.find({}); // Get all orders
+        
+        const doorSalesReport = {};
+
+        confirmedOrders.forEach((order) => {
+            if (order.product && Array.isArray(order.product)) {
+                order.product.forEach((item) => {
+                    // Check if this is a door product
+                    if (item.product === 'Door' && item.type) {
+                        const doorType = item.type;
+                        
+                        if (!doorSalesReport[doorType]) {
+                            doorSalesReport[doorType] = {
+                                type: doorType,
+                                totalSales: 0,
+                                count: 0
+                            };
+                        }
+                        
+                        // Add to total sales and count
+                        doorSalesReport[doorType].totalSales += item.totalcost || 0;
+                        doorSalesReport[doorType].count += item.quantity || 1;
+                    }
+                });
+            }
+        });
+
+        // Convert to array, sort by sales (descending)
+        const result = Object.values(doorSalesReport)
+            .filter(item => item.totalSales > 0)
+            .sort((a, b) => b.totalSales - a.totalSales)
+            .map(item => ({
+                type: item.type,
+                totalSales: item.totalSales,
+                count: item.count
+            }));
+
+        res.json(result);
+    } catch (error) {
+        console.error("Error fetching door sales data:", error);
+        res.status(500).json({ 
+            error: "Internal server error",
+            details: error.message 
+        });
+    }
+});
+
+route.get('/louver-sales-data', async (req, res) => {
+    try {
+        const confirmedOrders = await Order.find({}); // Get all orders
+        
+        const louverSalesReport = {};
+
+        confirmedOrders.forEach((order) => {
+            if (order.product && Array.isArray(order.product)) {
+                order.product.forEach((item) => {
+                    // Check if this is a louver product
+                    if (item.product === 'Louver' && item.variant) {
+                        const louverVariant = item.variant;
+                        
+                        if (!louverSalesReport[louverVariant]) {
+                            louverSalesReport[louverVariant] = {
+                                variant: louverVariant,
+                                totalSales: 0,
+                                count: 0
+                            };
+                        }
+                        
+                        // Add to total sales and count
+                        louverSalesReport[louverVariant].totalSales += item.totalcost || 0;
+                        louverSalesReport[louverVariant].count += item.quantity || 1;
+                    }
+                });
+            }
+        });
+
+        // Convert to array, sort by sales (descending)
+        const result = Object.values(louverSalesReport)
+            .filter(item => item.totalSales > 0)
+            .sort((a, b) => b.totalSales - a.totalSales)
+            .map(item => ({
+                variant: item.variant,
+                totalSales: item.totalSales,
+                count: item.count
+            }));
+
+        res.json(result);
+    } catch (error) {
+        console.error("Error fetching louver sales data:", error);
+        res.status(500).json({ 
+            error: "Internal server error",
+            details: error.message 
+        });
+    }
+});
+
+
+route.get('/window-sales-data', async (req, res) => {
+    try {
+        const confirmedOrders = await Order.find({}); // Get all orders
+        
+        const windowSalesReport = {};
+
+        confirmedOrders.forEach((order) => {
+            if (order.product && Array.isArray(order.product)) {
+                order.product.forEach((item) => {
+                    // Check if this is a window product
+                    if (item.product === 'Window' && item.type) {
+                        const windowType = item.type;
+                        
+                        if (!windowSalesReport[windowType]) {
+                            windowSalesReport[windowType] = {
+                                type: windowType,
+                                totalSales: 0,
+                                count: 0
+                            };
+                        }
+                        
+                        // Add to total sales and count
+                        windowSalesReport[windowType].totalSales += item.totalcost || 0;
+                        windowSalesReport[windowType].count += item.quantity || 1;
+                    }
+                });
+            }
+        });
+
+        // Convert to array, sort by sales (descending)
+        const result = Object.values(windowSalesReport)
+            .filter(item => item.totalSales > 0)
+            .sort((a, b) => b.totalSales - a.totalSales)
+            .map(item => ({
+                type: item.type,
+                totalSales: item.totalSales,
+                count: item.count
+            }));
+
+        res.json(result);
+    } catch (error) {
+        console.error("Error fetching window sales data:", error);
+        res.status(500).json({ 
+            error: "Internal server error",
+            details: error.message 
+        });
     }
 });
 
@@ -391,6 +516,8 @@ route.get('/monthly-sales', async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// ------------------------------------------------------------------------------------------------------- //
 
 // To View the Details in Order Processing
 
